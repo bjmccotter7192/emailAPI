@@ -49,11 +49,29 @@ def formEmailMessage(data):
 
     return msg
 
-def sendEmail(smtpServerUrl, smtpServerPort, data):
-    dataDict = dict(data)
-    validated = validateInputs(dataDict)[0]
+def formHTMLEmailMessage(data):
+    sender = data.get('From')
+    recipients = data.get('To')
+    cc = data.get('Cc')
+    bcc = data.get('Bcc')
+    subject = data.get('Subject')
+    emailBody = data.get('Body')
 
-    if validated:
+    msg = MIMEMultipart()
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = ", ".join(recipients)
+    msg['Bcc'] = ", ".join(bcc)
+    msg['Cc'] = ", ".join(cc)
+    msg.attach(MIMEText(emailBody, "html"))
+
+    return msg
+
+def sendMail(smtpServerUrl, smtpServerPort, data):
+    dataDict = dict(data)
+    validated = validateInputs(dataDict)
+
+    if validated[0]:
         sender = dataDict.get('From')
         recipients = dataDict.get('To')
 
@@ -65,6 +83,26 @@ def sendEmail(smtpServerUrl, smtpServerPort, data):
 
         message = formEmailMessage(dataDict)    
         s.sendmail(sender, recipients, message.as_string())
-        return { 'success': f"Successfully sent an email to: {recipients}" }
+        return f"Successfully sent an email to: {recipients}"
     else:
-        return { 'Failure': f"Your {validated[1]} data has an empty string, please correct and try again."}
+        return f"Failed to validate your {validated[1]} data, it has an empty string, please correct and try again."
+
+def sendHTMLEmail(smtpServerUrl, smtpServerPort, data):
+    dataDict = dict(data)
+    validated = validateInputs(dataDict)
+
+    if validated[0]:
+        sender = dataDict.get('From')
+        recipients = dataDict.get('To')
+
+        try:
+            s = smtplib.SMTP(smtpServerUrl, smtpServerPort)
+            s.set_debuglevel(1)
+        except ConnectionException as connEx:
+            return { 'message': connEx.args[0] }, 401
+
+        message = formHTMLEmailMessage(dataDict)    
+        s.sendmail(sender, recipients, message.as_string())
+        return f"Successfully sent an email to: {recipients}"
+    else:
+        return f"Failed to validate your {validated[1]} data, it has an empty string, please correct and try again."

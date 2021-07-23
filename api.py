@@ -1,6 +1,10 @@
 from emailModel import EmailModel
-from emailLogic import sendEmail
+from emailLogic import sendMail, sendHTMLEmail
 from fastapi import FastAPI, HTTPException
+import os
+
+smtpServer = "smtp.veteransunited.com"
+smtpPort = 25
 
 app = FastAPI(
     title='EmailAPI',
@@ -21,7 +25,7 @@ app = FastAPI(
         summary="Send an plain text email",
         tags=["SendMail"]
     )
-def send_mail(data: EmailModel):
+def sendEmail(data: EmailModel):
     """
         SendMail is a fun tool that uses the smtplib package to connect you 
         to the veteransunited smtp server over the encrypted port. Please be
@@ -29,7 +33,22 @@ def send_mail(data: EmailModel):
 
         Thanks and enjoy sending those mails!
     """
-    return sendEmail("smtp.veteransunited.com", 25, data)
+    return sendMail(smtpServer, smtpPort, data)
+
+@app.post(
+        "/api/v1/sendMailHTML",
+        summary="Send an html supported email",
+        tags=["SendMail"]
+    )
+def sendHtmlEmail(data: EmailModel):
+    """
+        SendMail is a fun tool that uses the smtplib package to connect you 
+        to the veteransunited smtp server over the encrypted port. Please be
+        sure to fill out all the required fields so there is no issue.
+
+        Thanks and enjoy sending those mails!
+    """
+    return sendHTMLEmail(smtpServer, smtpPort, data)
 
 @app.get(
         "/api/v1/health",
