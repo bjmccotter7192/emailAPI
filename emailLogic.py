@@ -1,20 +1,43 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Text
-
+import json
 class ConnectionException(Exception):
     """Failed to connect to the SMTP server"""
     pass
 
+def validateInputs(data):
+    print("inside of the validate inputss")
+    recipients = data.get('To')
+    sender = data.get('From')
+    body = data.get('Body')
+
+    response = [True, "Success! You sent valid data."]
+
+    if len(recipients) > 0:
+        for i in recipients:
+            print("inside of the recipients loop")
+            if i == "":
+                print(f"Checking what i is: {i}")
+                response = [False, "To"]
+                
+    if sender == "":
+        print("Inside of the sender if")
+        response = [False, "From"]
+
+    if body == "":
+        print("Inside of the body if")
+        response = [False, "Body"]
+
+    return response
 
 def formEmailMessage(data):
-    sender = data.get('from')
-    recipients = data.get('to')
-    cc = data.get('cc')
-    bcc = data.get('bcc')
-    subject = data.get('subject')
-    emailBody = data.get('body')
+    sender = data.get('From')
+    recipients = data.get('To')
+    cc = data.get('Cc')
+    bcc = data.get('Bcc')
+    subject = data.get('Subject')
+    emailBody = data.get('Body')
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -26,32 +49,22 @@ def formEmailMessage(data):
 
     return msg
 
-
 def sendEmail(smtpServerUrl, smtpServerPort, data):
-    try:
-        s = smtplib.SMTP(smtpServerUrl, smtpServerPort)
-        s.set_debuglevel(1)
-    except ConnectionException as connEx:
-        return { 'message': connEx.args[0] }, 401
+    dataDict = dict(data)
+    validated = validateInputs(dataDict)[0]
 
-    message = formEmailMessage(data)    
-    s.sendmail(data.get('from'), data.get('to'), message.as_string())
+    if validated:
+        sender = dataDict.get('From')
+        recipients = dataDict.get('To')
 
+        try:
+            s = smtplib.SMTP(smtpServerUrl, smtpServerPort)
+            s.set_debuglevel(1)
+        except ConnectionException as connEx:
+            return { 'message': connEx.args[0] }, 401
 
-if __name__ == "__main__":
-    emailData = {
-        "to": ["bj.mccotter@veteransunited.com"],
-        "from": "bjmac@no-reply.com",
-        "cc": [],
-        "bcc": [],
-        "subject": "Finally got everything in order!",
-        "body": """
-            Will this format?
-            I wonder if the new line characters will show up
-            Maybe yes
-            Maybe no
-            The world may never know.        
-        """
-    }
-
-    print(sendEmail("smtp.veteransunited.com", 25, emailData))
+        message = formEmailMessage(dataDict)    
+        s.sendmail(sender, recipients, message.as_string())
+        return { 'success': f"Successfully sent an email to: {recipients}" }
+    else:
+        return { 'Failure': f"Your {validated[1]} data has an empty string, please correct and try again."}

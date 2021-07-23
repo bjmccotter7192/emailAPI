@@ -1,0 +1,10 @@
+{
+    "From": "emailer@no-reply.com",
+    "To": [
+        "bj.mccotter@veteransunited.com"
+    ],
+    "Bcc": [],
+    "Cc": [],
+    "Subject": "This is a test subject",
+    "Body": "This is a test body for a plain text email"
+}
